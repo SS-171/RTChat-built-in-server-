@@ -73,7 +73,7 @@
     let isNew = true;
     let isCorrect = false;
     async function getDbUsers(room){
-        await fetch(`http://localhost:3000/stored/user/${room}`)
+        await fetch(`/stored/user/${room}`)
             .then(response => response.json())
             .then(data => users = data);
     }
