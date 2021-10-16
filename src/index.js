@@ -3,7 +3,6 @@ const express= require('express');
 const app = express();
 const exphbs = require('express-handlebars');//view engine used for render user interface
 const morgan = require('morgan')//logger
-const port = 3000;
 const route = require('./routes');
 const db = require('./config/db');
 const path = require('path');
@@ -32,9 +31,7 @@ app.use(
     }),
 );
 route(app)
-const server =app.listen(port, ()=>{
-    console.log(`App listening at http://localhost:${port}`)
-});
+const server = app.listen(process.env.PORT || 3000);
 const io = socketio(server);
 io.on('connection', (socket) =>{
     const botName = 'Admin';
