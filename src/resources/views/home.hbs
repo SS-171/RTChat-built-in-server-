@@ -4,9 +4,9 @@
             <i class="far fa-smile-wink"></i>
             <p class="header__text">CHATBOT</p>
         </div>
-  
+
         <div class='more-action'>
-            <p class='action-title'>More action</p>
+            <button class='action-title'>More action</button>
             <ul name="" class='action-select'>
                 <li id='leave-room-btn' class='action-option'>Leave room</li>
                 <li id='delete-account' class='action-option'>Delete account</li>
@@ -84,7 +84,8 @@
     const chatArea = document.querySelector('.app__body-right');
     const leaveRoomBtn = document.querySelector('#leave-room-btn');
     const onlineStatus = document.querySelector('.online-status');
-    const deleteAccount = document.querySelector('#delete-account')
+    const deleteAccount = document.querySelector('#delete-account');
+
     let userNameText ;
     ////
     const userName = `{{user.user_name}}`;
@@ -232,6 +233,7 @@
             message.username ='You' 
         }
         li.innerHTML = `
+        <div class= 'message-item-container'>
             <i class="fas fa-user"></i>
             <div class="message-item__main">
                 <div class="sub-info-message">
@@ -240,6 +242,7 @@
                 </div>
                 <p class="content-message">${message.message}</p>
             </div>
+        </div>
         `;
         messageDetail.appendChild(li);
     }

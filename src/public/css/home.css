@@ -93,6 +93,9 @@
     .action-title:hover ~ .action-select{
         display: block;
     }
+    .action-select:hover{
+        display: block;
+    }
     .action-select {
         position: absolute;
         display: none;
@@ -102,9 +105,7 @@
         right: 0;
         background-color: #fff;
     }
-    .action-select:hover{
-        display: block;
-    }
+
     .action-select::after {
         content: "";
         position: absolute;
@@ -192,6 +193,7 @@
 
     }
 
+
     /* //// */
     /* app body right style */
     .app__body-right {
@@ -209,26 +211,28 @@
         margin-bottom: 6px;
     }
 
-    .message-detail__item {
-        width: 70%;
+    .message-detail__item,  .message-item-container{
         display: flex;
         align-items: center;
     }
 
     .message-item__main {
-        width: 100%;
-        background-color: rgb(227, 243, 242);
-        border-radius: 6px;
-        padding: 6px 0 12px;
+        max-width: 100%;
+        border-radius: 10px;
+        padding: 6px 20px 12px 10px;
         word-wrap: break-word;
         margin-bottom: 16px;
+        background-color: rgb(241, 237, 237);
 
     }
 
     .message-detail__item--me .message-item__main {
-        background-color: rgb(243, 243, 243);
+        background-color: rgb(140, 207, 228);
+        
     }
-
+    .message-detail__item--me .message-item-container{
+        margin-left: auto;
+    }
     .message-detail__item i {
         font-size: 20px;
         margin: -16px 10px 0;
@@ -236,7 +240,7 @@
     }
 
     .message-detail__item--me {
-        margin-left: 30%;
+        margin-left: auto;
     }
 
     .sub-info-message {
@@ -328,9 +332,9 @@
         .app__body {
             height: 84%;
         }
-
+        
         .app__header {
-            height: 8%;
+            height: 12%;
         }
 
         .app__footer .input-message {
@@ -355,6 +359,21 @@
         .user-status{
             margin-top: -40px;
         }
-       
+        .header__brand{
+            font-size: 20px;
+        }
+        .action-select {
+            top : 90%;
+            font-size: 14px;
+        }
+        .action-option{
+            padding: 5px 5px;
+        }
+        .more-action {
+            margin-right : 20px;
+        }
+        .message-detail{
+            padding: 15px 15px;
+        }
     }
   
