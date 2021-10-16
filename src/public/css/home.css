@@ -375,5 +375,8 @@
         .message-detail{
             padding: 15px 15px;
         }
+        ::-webkit-scrollbar {
+        width: 12px;
+        }
     }
   
