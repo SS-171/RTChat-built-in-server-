@@ -1,0 +1,141 @@
+<div class='background'>
+
+    <div class="wrap-container">
+
+        <div class="container">
+            <form method='POST' class ='user-area' action="/home" >
+                    <div class='circle'></div>
+                    <div class="title-area">
+                        <h3 class='title'>SELAMT DATANG</h3>
+                        <span class='sub-title'>LOGIN TO CHATROOM</span>
+                    </div>
+                    <div class="input">
+                        <div class='input__name'>
+                            <input name='user_name' type="text" class="input__user-name" placeholder="User name" required>
+                        </div>
+                        <div class='input__name'>
+                            <input name='password' type="password" class="input__user-name" placeholder="Password" required >
+                        </div>
+                        <select name="room-select" id="" class="room__name" required>
+                            <option value="">--Choose a room--</option>
+                            <option value="NSFW">NSFW</option>
+                            <option value="Work">Work</option>
+                            <option value="Study">Study</option>
+
+                        </select>
+                    <input type="checkbox" name='isNew' value='' checked hidden>
+                    </div>
+                    <button type='button' class="join-btn">JOIN ROOM</button>
+            </form>
+            <div class="about-area">
+                <div class="title-area">
+                    <h3 class='title'>CTB USIAN ONINE</h3>
+                    <span class='sub-title'>SMK BANGUN MANDGRIH</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    //Connection config
+    const socket = io();
+    socket.on('connect', () => {
+        console.log(socket.id);
+        console.log('Connected:' + socket.connected)
+    })
+    socket.on("connect_error", () => {
+        setTimeout(() => {
+            socket.connect();
+        }, 1000);
+    });
+    socket.on('disconnect', (reason) => {
+        if (reason === "io server disconnect") {
+            // the disconnection was initiated by the server, you need to reconnect manually
+            socket.connect();
+        }
+    })
+    //variable declare
+  
+    let loginForm =document.querySelector('.user-area');
+    let joinBtn =document.querySelector('.join-btn');
+    const form =document.querySelector('.user-area');
+    const aboutHeight = form.offsetHeight;
+    document.querySelector('.about-area').style.height = aboutHeight + 'px';
+    //first load reset
+    localStorage.setItem('LoadTimes', 0);
+    //declare var for ws handle
+    let userName = document.querySelector('input[name="user_name"]');
+    let passWord=document.querySelector('input[name="password"]');
+    let room =document.querySelector('select[name="room-select"]');
+    let checkNewCheckBox =document.querySelector('input[name="isNew"]');
+    //fetch user in database
+    let users =[];
+    let isNew = true;
+    let isCorrect = false;
+    async function getDbUsers(room){
+        await fetch(`http://localhost:3000/stored/user/${room}`)
+            .then(response => response.json())
+            .then(data => users = data);
+    }
+    
+    joinBtn.onclick = function (e) {
+        e.preventDefault();
+        isNew = true;
+        isCorrect = false;
+        if (userName.value === '' || passWord.value === '' || room.value === '') {
+            alert('Fill out all the field');
+
+            return;
+        }
+        getDbUsers(room.value).then(()=>{
+
+            checkInput(userName.value, passWord.value);
+            if (isNew) {
+                checkNewCheckBox.value = true;
+                form.submit();
+            }
+            else {
+
+                if (isCorrect) {
+                    checkNewCheckBox.value = false;
+                    form.submit();
+                }
+                else {
+                    alert('This username has been used.\n Please, try with the new one or the correct password.');
+                    return
+                }
+
+            }
+        })
+    }
+
+   
+    //check if user exist
+
+    function checkInput (username,password) {
+
+        users.forEach(user => {
+            if(user.username === username) {
+                isNew = false;
+                if((user.password === password)) {
+                    isCorrect = true;
+                }
+                else {
+                    isCorrect = false;
+                }
+            }
+        }
+        )
+    }
+    window.history.pushState({id:1}, 'home');
+     window.addEventListener("pageshow", function (event) {
+            var historyTraversal = event.persisted ||
+                (typeof window.performance != "undefined" &&
+                    window.performance.navigation.type === 2);
+            if (historyTraversal) {
+                // Handle page restore.
+                window.location.reload();
+            }
+        });
+
+</script>

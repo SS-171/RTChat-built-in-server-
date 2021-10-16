@@ -1,0 +1,300 @@
+<div class="container">
+    <div class="app__header">
+        <div class="header__brand">
+            <i class="far fa-smile-wink"></i>
+            <p class="header__text">CHATBOT</p>
+        </div>
+  
+        <div class='more-action'>
+            <p class='action-title'>More action</p>
+            <ul name="" class='action-select'>
+                <li id='leave-room-btn' class='action-option'>Leave room</li>
+                <li id='delete-account' class='action-option'>Delete account</li>
+            </ul>
+        </div>
+    </div>
+    <div class="app__body">
+        <div class="app__body-left">
+
+            <div class="room-info">
+                <div class="child-header">
+                    <div class="child-header__icon">
+                        <i class="fas fa-comments"></i>
+                    </div>
+                    <p class="child-header__name">Room Name</p>
+                </div>
+                <p class="room-detail__name"></p>
+            </div>
+            <div class="user-info">
+                <div class="child-header">
+                    <div class="child-header__icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <p class="child-header__name">Users</p>
+                </div>
+                <ul class="user-info__detail">
+
+                </ul>
+            </div>
+        </div>
+        <div class="app__body-right">
+            <ul class="message-detail">
+
+            </ul>
+        <span class='user-status'></span>
+
+        </div>
+    </div>
+    <div class="app__footer">
+        <input value="" type="text" class="input-message" placeholder='Write your message...'>
+        <div class="send-message-btn">
+            <div class="send-message-btn-wrap">
+                <i class="far fa-paper-plane"></i>
+
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    //Connection config
+    const socket = io();
+    socket.on('connect', ()=>{
+        console.log(socket.id);
+        console.log('Connected:' + socket.connected)
+    })
+    socket.on("connect_error", () => {
+            setTimeout(() => {
+                socket.connect();
+            }, 1000);
+        });
+    socket.on('disconnect', (reason)=>{
+        if (reason === "io server disconnect") {
+            // the disconnection was initiated by the server, you need to reconnect manually
+            socket.connect();
+        }
+    })
+    //user back action
+    //////Variable declare
+    const messageDetail = document.querySelector('.message-detail');
+    const userList = document.querySelector('.user-info__detail');
+    const roomName = document.querySelector('.room-detail__name');
+    const sendBtn = document.querySelector('.send-message-btn-wrap');
+    const inputMsg = document.querySelector('.input-message');
+    const userStatus = document.querySelector('.user-status');
+    const chatArea = document.querySelector('.app__body-right');
+    const leaveRoomBtn = document.querySelector('#leave-room-btn');
+    const onlineStatus = document.querySelector('.online-status');
+    const deleteAccount = document.querySelector('#delete-account')
+    let userNameText ;
+    ////
+    const userName = `{{user.user_name}}`;
+    const passWord = `{{user.password}}`;
+    const userRoom = `{{user.room-select}}`;
+    let isNew = `{{user.isNew}}`;
+    let users =[];
+    //first load
+    
+    const loadTime = Number(localStorage.getItem('LoadTimes'));
+    localStorage.setItem('LoadTimes', loadTime + 1);
+    if (loadTime >=1) isNew = false;
+    else {
+        //broadcast new user join notify
+        socket.on('userStatus', info => {
+            outputMessage(info, 'other');
+        })
+    }
+    ////
+    socket.emit('userJoin', {username: userName, room: userRoom, password: passWord, isNew: isNew});
+    console.log(isNew);
+    socket.on('welcome', message => {
+        outputMessage(message,'other');
+    });
+    socket.on('notify', (data) =>{
+        playSound();
+    })
+    
+    //send message to server
+    sendBtn.onclick = async function() {
+        
+        inputMsg.value = inputMsg.value.trim();
+        if(inputMsg.value){
+            //emit msg to server
+            await socket.emit('newMessage', {message:inputMsg.value, id:socket.id, username: userName, room: userRoom});
+            inputMsg.value = '';
+        }
+        else return false;
+    }
+    //render users of room
+    socket.on('roomUsers', info =>{
+        getDbUsers(info.roomName).then(()=>
+        {
+            userList.innerHTML = '';
+            let allUser = getUserInArray(users);
+            let roomUsers = getUserInArray(info.roomUsers);
+            outputUsers(roomUsers, 'online');
+            outputUsers(diffArray(allUser, roomUsers), 'offline');
+            outputRoom(info.roomName);
+        })
+        .then(()=>
+        {
+            userNameText =document.querySelectorAll('.user-name');
+            socket.emit('indicate', socket.id)
+        })
+         
+    })
+    //indicate who is me
+   socket.on('yourIndicate', (username) =>{
+       userNameText.forEach(each =>{
+           if(each.innerText ===username) {
+               each.innerText = username + ' (You)'
+               each.closest('.user-info__item').style.backgroundColor ='rgba(140, 124, 207, 0.6)'
+               }
+           return;
+       })
+   })
+    //enter to send messages
+    document.addEventListener("keyup", function(event) {
+        if (event.keyCode === 13) {
+            sendBtn.click();
+        }
+    });
+    // receive message back from server
+    socket.on('commonMessage', (message, sameId) =>{
+        console.log(sameId)
+        if(checkInArray(sameId, socket.id)) {
+            outputMessage(message, 'me');
+        }
+        else outputMessage(message, 'other');
+        chatArea.scrollTop = chatArea.scrollHeight;
+    })
+    //typing detection
+    inputMsg.addEventListener('keypress', function(){
+        socket.emit('userTyping', { username: userName, room: userRoom })
+    })
+    socket.on('typingEvent', username =>{
+        userStatus.innerText = `${username} is typing `;
+        socket.on('commonMessage', ()=>{
+            userStatus.innerText = '';
+        })
+        setTimeout(function(){userStatus.innerText =''}, 3000);
+    });
+
+    //leave room handle
+    leaveRoomBtn.onclick =function() {
+        const leaveRoom = confirm('Are you sure to leave this room?');
+        if(leaveRoom) location.href = '/login';
+    }
+
+    ////Delete account 
+    deleteAccount.onclick = function(){
+        let confirmMsg = confirm('Are you sure to delete this account')
+        if(confirmMsg){
+
+            fetch(`/home/delete/${userRoom}/${userName}`)
+            .then(() => location.href = '/login');
+            
+        }
+
+    }
+    
+    ////First messages render
+
+    fetch(`/stored/message/${userRoom}`)
+    .then(data => data.json())
+    .then(result =>{
+        renderMessage(result);
+        
+    })
+    
+    
+    ////function define
+    function diffArray(arr1, arr2){
+        return arr1.concat(arr2).filter(item => !arr1.includes(item) ||!arr2.includes(item))
+    }
+    //convert json users to array
+    function getUserInArray(arr){
+        let users =[];
+        arr.forEach(each =>{
+            users.push(each.username)
+        })
+        return users;
+    }
+    async function getDbUsers(room) {
+            await fetch(`/stored/user/${room}`)
+                .then(response => response.json())
+                .then(data =>{users = data} );
+        }
+    function outputMessage(message, sender){
+        const li = document.createElement('li');
+        li.classList.add('message-detail__item');
+        if (sender ==='me') {
+            li.classList.add('message-detail__item--me');
+            message.username ='You' 
+        }
+        li.innerHTML = `
+            <i class="fas fa-user"></i>
+            <div class="message-item__main">
+                <div class="sub-info-message">
+                    <p class="message-owner">${message.username + '&nbsp'}</p>
+                    <p class="message-arrive-time"> ${message.time}</p>
+                </div>
+                <p class="content-message">${message.message}</p>
+            </div>
+        `;
+        messageDetail.appendChild(li);
+    }
+    function outputUsers(users, status){
+        let color ='';
+        
+        if(status ==='online') color = '#3bf13b';
+        else color= 'gray';
+        users.forEach(user => {
+            const li = document.createElement('li');
+            li.classList.add('user-info__item');
+            li.innerHTML = `
+            <span class='online-status' style="background-color:${color}"></span>
+            <p class='user-name'>${user}</p>`;
+            userList.appendChild(li);
+        })
+    }
+    function outputRoom(room) {
+        roomName.innerText = room;
+    }
+    function playSound() {
+        const audio = new Audio('./sound/ring.mp3');
+        audio.play('./sound/ring.mp3');
+        }
+    function checkInArray(arr, item){
+        let inSameArr =false;
+        let isID = false;
+        let result;
+        if(arr.length === 1){
+            if(arr[0] === item) result = true; else result = false;
+        }
+        else {
+            arr[0].forEach(child => {
+                if (String(child) === item) {
+                    inSameArr = true;
+                    return;
+                }
+
+            })
+            if(arr[1] === item) isID = true;
+            result  = (isID || inSameArr);
+        }
+        return result;
+    }
+    function renderMessage(messages){
+        console.log(userName)
+        messages.forEach(message =>{
+            console.log(message.username)
+            if(message.username === userName){
+                
+                outputMessage(message, 'me');
+            }
+            else outputMessage(message, 'other');
+        })
+        
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
+</script>

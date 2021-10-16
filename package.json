@@ -1,0 +1,22 @@
+{
+  "name": "realtime_server",
+  "version": "1.0.0",
+  "description": "None",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon --inspect src/index.js ",
+    "watch": "sass --watch src/resources/scss/app.scss src/public/css/style.css",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "ThanhNhon",
+  "license": "ISC",
+  "dependencies": {
+    "date-and-time": "^2.0.1",
+    "ejs": "^3.1.6",
+    "express": "^4.17.1",
+    "express-handlebars": "^5.3.4",
+    "mongoose": "^6.0.10",
+    "morgan": "^1.10.0",
+    "socket.io": "^4.2.0"
+  }
+}
