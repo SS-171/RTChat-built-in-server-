@@ -214,6 +214,7 @@
     .message-detail__item,  .message-item-container{
         display: flex;
         align-items: center;
+        max-width: 70%;
     }
 
     .message-item__main {
